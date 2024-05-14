@@ -232,7 +232,7 @@ function inputRequest(models::Vector)
         model_name = JSON.parse(String(request.body))["name"]
         model = get_model_from_name(models, model_name)
         body = Dict(
-            "inputSizes" => [inputSizes(model)]
+            "inputSizes" => inputSizes(model)
         )
         return HTTP.Response(JSON.json(body))
     end
@@ -367,7 +367,7 @@ function with_logging(handler, log::Bool=false, callName::String="handler")
                 "\tRequest information", String(copy(req.body)), "\n",
                 "[Header Info: ", req.headers, "]\n"
                 #"[host: ", req.headers["Host"],", length: ", req.headers["Content-Length"],
-                # ", type: ", req.headers["Content-Type"], "agent: ", req.headers["User-Agent"], "]\n"
+                #", type: ", req.headers["Content-Type"], "agent: ", req.headers["User-Agent"], "]\n"
         )
     end
     handler(req)  # Call the original handler
