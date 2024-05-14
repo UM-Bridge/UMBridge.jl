@@ -359,17 +359,34 @@ function applyHessianRequest(models::Vector)
     return handler
 end
 
+function with_logging(handler, log::Bool=false, callName::String="handler")
+  # @TODO: redirect logging to file object instead.
+  return function(req::HTTP.Request)
+    if log
+        println(">> Incoming Request: ", callName,   
+                "\tRequest information", String(copy(req.body)), "\n",
+                "[Header Info: ", req.headers, "]\n"
+                #"[host: ", req.headers["Host"],", length: ", req.headers["Content-Length"],
+                # ", type: ", req.headers["Content-Type"], "agent: ", req.headers["User-Agent"], "]\n"
+        )
+    end
+    handler(req)  # Call the original handler
+  end
+end
+
 function serve_models(models::Vector, port=4242, max_workers=1)
+    # @TODO: Different argument for "Evaluate" to prevent extra verbosity?
+    
     router = HTTP.Router()
-    HTTP.register!(router, "POST", "/InputSizes", inputRequest(models))
-    HTTP.register!(router, "POST", "/OutputSizes", outputRequest(models))
-    HTTP.register!(router, "GET", "/Info", infoRequest(models))
-    HTTP.register!(router, "POST", "/ModelInfo", modelinfoRequest(models))
-    HTTP.register!(router, "POST", "/Evaluate", evaluateRequest(models))
-    HTTP.register!(router, "POST", "/Gradient", gradientRequest(models))
-    HTTP.register!(router, "POST", "/ApplyJacobian", applyJacobianRequest(models))
-    HTTP.register!(router, "POST", "/ApplyHessian", applyHessianRequest(models))
-    server = HTTP.serve!(router, port)
+    HTTP.register!(router, "POST", "/InputSizes", with_logging(inputRequest(models), logging, "InputSizes"))
+    HTTP.register!(router, "POST", "/OutputSizes", with_logging(outputRequest(models), logging, "OutputSizes"))
+    HTTP.register!(router, "GET", "/Info", with_logging(infoRequest(models), logging, "Info"))
+    HTTP.register!(router, "POST", "/ModelInfo", with_logging(modelinfoRequest(models), logging, "ModelInfo"))
+    HTTP.register!(router, "POST", "/Evaluate", with_logging(evaluateRequest(models), logging, "Evaluate"))
+    HTTP.register!(router, "POST", "/Gradient", with_logging(gradientRequest(models), logging, "Gradient"))
+    HTTP.register!(router, "POST", "/ApplyJacobian", with_logging(applyJacobianRequest(models), logging, "ApplyJacobian"))
+    HTTP.register!(router, "POST", "/ApplyHessian", with_logging(applyHessianRequest(models), logging, "ApplyHessian"))
+    server = HTTP.serve(router, port)
 end
 
 end
