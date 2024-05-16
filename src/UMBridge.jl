@@ -374,7 +374,7 @@ function with_logging(handler, log::Bool=false, callName::String="handler")
   end
 end
 
-function serve_models(models::Vector, port=4242, max_workers=1)
+function serve_models(models::Vector, port=4242, logging::Bool=false, max_workers=1)
     # @TODO: Different argument for "Evaluate" to prevent extra verbosity?
     
     router = HTTP.Router()
