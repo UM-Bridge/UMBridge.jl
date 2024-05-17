@@ -3,6 +3,8 @@ using HTTP
 using JSON
 using Test
 
+const port = 5252
+
 function testmodel_supported_operations(model)
     all([
         UMBridge.supports_evaluate(model),
@@ -14,7 +16,7 @@ end
 
 function testserver(models)
     # Serve model
-    port = 4242
+    # port = port
     server = UMBridge.serve_models(models, port)
     # Shut down server
     close(server)
@@ -22,7 +24,7 @@ function testserver(models)
 end
 
 function testclientserverpair(models, httpmodel)
-    server = UMBridge.serve_models(models, 4242)
+    server = UMBridge.serve_models(models, port)
     input = UMBridge.model_input_sizes(httpmodel)[1] == 1
     output = UMBridge.model_output_sizes(httpmodel)[1] == 1
     close(server)
