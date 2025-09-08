@@ -309,7 +309,7 @@ function modelinfoRequest(models::Vector)
 end
 
 function evaluateRequest(models::Vector)
-     function handler(request::HTTP.Request)
+    function handler(request::HTTP.Request)
 	# Parse the JSON body
 	parsed_body = JSON.parse(String(request.body))
 	# Extract the model name directly from parsed_body
@@ -370,15 +370,25 @@ function evaluateRequest(models::Vector)
 	if length(output) != length(outputSizes(model))
 		body = Dict(
 			"error" => Dict(
-				"type" => "InvalidInput",
+				"type" => "InvalidOutput",
 				"message" => "Invalid output"
 			)
 		)
 		return HTTP.Response(400, JSON.json(body))
 	end
-
+	for i in 1:length(output)
+		if length(output[i]) != outputSizes(model)[i]
+			body = Dict(
+				    "error" => Dict(
+						    "type" => "InvalidOuput",
+						    "message" => "Invalid output"
+						    )
+				    )
+			return HTTP.Response(400, JSON.json(body))
+		end
+	end
         body = Dict(
-		    "output" => [output]
+		    "output" => output
 		)
         return HTTP.Response(JSON.json(body))
     end
@@ -462,7 +472,7 @@ function gradientRequest(models::Vector)
 	output = model.gradient(model_outWrt, model_inWrt, model_parameters, model_sens, model_config)
 
         body = Dict(
-		    "output" => [output]
+		    "output" => output
         )
         return HTTP.Response(JSON.json(body))
     end
@@ -507,7 +517,7 @@ function applyJacobianRequest(models::Vector)
 	# Apply model's Jacobian
 	output = model.applyJacobian(model_outWrt, model_inWrt, model_parameters, model_vec, model_config)
 	body = Dict(
-		    "output" => [output]
+		    "output" => output
         )
         return HTTP.Response(JSON.json(body))
     end
@@ -554,7 +564,7 @@ function applyHessianRequest(models::Vector)
 	output = model.applyHessian(model_outWrt, model_inWrt1, model_inWrt2, model_parameters, model_sens, model_vec, model_config)
 	
         body = Dict(
-		    "output" => [output]
+		    "output" => output
         )
         return HTTP.Response(JSON.json(body))
     end
