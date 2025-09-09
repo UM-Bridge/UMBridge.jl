@@ -380,7 +380,7 @@ function evaluateRequest(models::Vector)
 		if length(output[i]) != outputSizes(model)[i]
 			body = Dict(
 				    "error" => Dict(
-						    "type" => "InvalidOuput",
+						    "type" => "InvalidOutput",
 						    "message" => "Invalid output"
 						    )
 				    )
