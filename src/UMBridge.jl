@@ -241,7 +241,7 @@ function runtime_error(model::Model, e, str1, str2, str3)
 				    "message" => "Model was unable to provide a valid " * str3 * " due to: " * string(e) * result
 				    )
 		    )
-	return HTTP.Response(500, JSON.json(body))
+	return HTTP.Response(500, ["Content-Type" => "application/json"], JSON.json(body))
 end
 
 function get_model_from_name(models::Vector, model_name::String)
@@ -269,7 +269,7 @@ function inputRequest(models::Vector)
 						    "message" => "Model name not found"
 						    )
 				    )
-			return HTTP.Response(400, JSON.json(body))
+			return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 		end
 
 		# Extract config
@@ -283,7 +283,7 @@ function inputRequest(models::Vector)
 			body = Dict(
 				    "inputSizes" => model.inputSizes
 				    )
-			return HTTP.Response(JSON.json(body))
+			return HTTP.Response(200, ["Content-Type" => "application/json"], JSON.json(body))
 		catch e
 			return runtime_error(model, e, "the evaluation of inputSizes", "InputSizes", "input size")
 		end 
@@ -308,7 +308,7 @@ function outputRequest(models::Vector)
 						    "message" => "Model name not found"
 						    )
 				    )
-			return HTTP.Response(400, JSON.json(body))
+			return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 		end
 
 		# Extract config
@@ -322,7 +322,7 @@ function outputRequest(models::Vector)
 			body = Dict(
 				    "outputSizes" => model.outputSizes
 				    )
-			return HTTP.Response(JSON.json(body))
+			return HTTP.Response(200, ["Content-Type" => "application/json"], JSON.json(body))
 		catch e
 			return runtime_error(model, e, "the evaluation of outputSizes", "OutputSizes", "output size")
 		end 
@@ -353,7 +353,7 @@ function modelinfoRequest(models::Vector)
 						    "message" => "Model name not found"
 						    )
 				    )
-			return HTTP.Response(400, JSON.json(body))
+			return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 		end
 
 		body = Dict( "support" => Dict(
@@ -362,7 +362,7 @@ function modelinfoRequest(models::Vector)
 					       "ApplyJacobian" => supportsJacobian(model),
 					       "ApplyHessian" => supportsHessian(model)
 					       ))
-		return HTTP.Response(JSON.json(body))
+		return HTTP.Response(200, ["Content-Type" => "application/json"], JSON.json(body))
 	end
 	return handler
 end
@@ -388,7 +388,7 @@ function evaluateRequest(models::Vector)
 						    "message" => "Model name not found"
 						    )
 				    )
-			return HTTP.Response(400, JSON.json(body))
+			return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 		end
 
 		# Extract inputs and check
@@ -401,7 +401,7 @@ function evaluateRequest(models::Vector)
 							    "message" => "Invalid input"
 							    )
 					    )
-				return HTTP.Response(400, JSON.json(body))
+				return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 			end
 		catch e
 			return runtime_error(model, e, "the evaluation of inputSizes", "InputSizes", "input size")
@@ -417,7 +417,7 @@ function evaluateRequest(models::Vector)
 								    "message" => "Invalid input"
 								    )
 						    )
-					return HTTP.Response(400, JSON.json(body))
+					return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 				end
 			catch e
 				return runtime_error(model, e, "the evaluation of inputSizes", "InputSizes", "input size")
@@ -431,7 +431,7 @@ function evaluateRequest(models::Vector)
 						    "message" => "Unsupported feature"
 						    )
 				    )
-			return HTTP.Response(400, JSON.json(body))
+			return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 		end
 
 		for i in eachindex(model_parameters)
@@ -442,7 +442,7 @@ function evaluateRequest(models::Vector)
 							    "message" => "Input must be an array of arrays!"
 							    )
 					    )
-				return HTTP.Response(400, JSON.json(body))
+				return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 			end
 			if length(model_parameters[i]) != model.inputSizes[i]
 				body = Dict(
@@ -451,7 +451,7 @@ function evaluateRequest(models::Vector)
 							    "message" => "Input parameter $i has invalid length! Expected $(model.inputSizes[i]) but got $(length(model_parameters[i])) instead!"
 							    )
 					    )
-				return HTTP.Response(400, JSON.json(body))
+				return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 			end
 		end
 
@@ -479,7 +479,7 @@ function evaluateRequest(models::Vector)
 							    "message" => "Invalid output"
 							    )
 					    )
-				return HTTP.Response(400, JSON.json(body))
+				return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 			end
 		catch e
 			return runtime_error(model, e, "the evaluation of outputSizes", "OutputSizes", "output size")
@@ -493,7 +493,7 @@ function evaluateRequest(models::Vector)
 							    "message" => "Output must be an array of arrays!"
 							    )
 					    )
-				return HTTP.Response(400, JSON.json(body))
+				return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 			end
 			if length(output[i]) != model.outputSizes[i]
 				body = Dict(
@@ -502,13 +502,13 @@ function evaluateRequest(models::Vector)
 							    "message" => "Output parameter $i has invalid length! Expected $(model.outputSizes[i]) but got $(length(output[i])) instead!"
 							    )
 					    )
-				return HTTP.Response(400, JSON.json(body))
+				return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 			end
 		end
 		body = Dict(
 			    "output" => output
 			    )
-		return HTTP.Response(JSON.json(body))
+		return HTTP.Response(200, ["Content-Type" => "application/json"], JSON.json(body))
 	end
 	return handler
 end
@@ -532,7 +532,7 @@ function gradientRequest(models::Vector)
 						    "message" => "Model name not found"
 						    )
 				    )
-			return HTTP.Response(400, JSON.json(body))
+			return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 		end
 		if !supportsGradient(model)
 			body = Dict(
@@ -541,7 +541,7 @@ function gradientRequest(models::Vector)
 						    "message" => "Unsupported feature"
 						    )
 				    )
-			return HTTP.Response(400, JSON.json(body))
+			return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 		end
 
 		model_inWrt = parsed_body["inWrt"] + 1 # account for julia indices starting at 1
@@ -553,7 +553,7 @@ function gradientRequest(models::Vector)
 							    "message" => "Invalid inWrt index! Expected between 0 and  and number of inputs minus one, but got " * string(model_inWrt - 1)
 							    )
 					    )
-				return HTTP.Response(400, JSON.json(body))
+				return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 			end
 		catch e
 			return runtime_error(model, e, "the evaluation of inputSizes", "InputSizes", "input size")
@@ -567,7 +567,7 @@ function gradientRequest(models::Vector)
 							    "message" => "Invalid outWrt index! Expected between 0 and  and number of inputs minus one, but got " * string(model_outWrt - 1)
 							    )
 					    )
-				return HTTP.Response(400, JSON.json(body))
+				return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 			end
 		catch e
 			return runtime_error(model, e, "the evaluation of inputSizes", "InputSizes", "input size")
@@ -583,7 +583,7 @@ function gradientRequest(models::Vector)
 							    "message" => "Invalid number of input parameters"
 							    )
 					    )
-				return HTTP.Response(400, JSON.json(body))
+				return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 			end
 		catch e
 			return runtime_error(model, e, "the evaluation of inputSizes", "InputSizes", "input size")
@@ -598,7 +598,7 @@ function gradientRequest(models::Vector)
 								    "message" => "Input parameter $i must be an array!"
 								    )
 						    )
-					return HTTP.Response(400, JSON.json(body))
+					return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 				end
 
 				if length(model_parameters[i]) != model.inputSizes[i]
@@ -608,7 +608,7 @@ function gradientRequest(models::Vector)
 								    "message" => "Input parameter $i has invalid length! Expected $(model.inputSizes[i]) but got $(length(model_parameters[i])) instead!"
 								    )
 						    )
-					return HTTP.Response(400, JSON.json(body))
+					return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 				end
 			catch e
 				return runtime_error(model, e, "the evaluation of inputSizes", "InputSizes", "input size")
@@ -627,7 +627,7 @@ function gradientRequest(models::Vector)
 		body = Dict(
 			    "output" => output
 			    )
-		return HTTP.Response(JSON.json(body))
+		return HTTP.Response(200, ["Content-Type" => "application/json"],JSON.json(body))
 
 	end
 	return handler
@@ -652,7 +652,7 @@ function applyJacobianRequest(models::Vector)
 						    "message" => "Model name not found"
 						    )
 				    )
-			return HTTP.Response(400, JSON.json(body))
+			return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 		end
 		if !supportsJacobian(model)
 			body = Dict(
@@ -661,7 +661,7 @@ function applyJacobianRequest(models::Vector)
 						    "message" => "Unsupported feature"
 						    )
 				    )
-			return HTTP.Response(400, JSON.json(body))
+			return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 		end
 
 
@@ -677,7 +677,7 @@ function applyJacobianRequest(models::Vector)
 						    "message" => "Invalid input"
 						    )
 				    )
-			return HTTP.Response(400, JSON.json(body))
+			return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 		end
 
 		for i in eachindex(model_parameters)
@@ -688,7 +688,7 @@ function applyJacobianRequest(models::Vector)
 							    "message" => "Input must be an array of arrays!"
 							    )
 					    )
-				return HTTP.Response(400, JSON.json(body))
+				return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 			end
 			if length(model_parameters[i]) != model.inputSizes[i]
 				body = Dict(
@@ -697,7 +697,7 @@ function applyJacobianRequest(models::Vector)
 							    "message" => "Input parameter $i has invalid length! Expected $(model.inputSizes[i]) but got $(length(model_parameters[i])) instead!"
 							    )
 					    )
-				return HTTP.Response(400, JSON.json(body))
+				return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 			end
 		end
 
@@ -715,7 +715,7 @@ function applyJacobianRequest(models::Vector)
 		end
 
 		body = Dict("output" => output)
-		return HTTP.Response(200, JSON.json(body))
+		return HTTP.Response(200, ["Content-Type" => "application/json"], JSON.json(body))
 	end
 	return handler
 end
@@ -739,7 +739,7 @@ function applyHessianRequest(models::Vector)
 						    "message" => "Model name not found"
 						    )
 				    )
-			return HTTP.Response(400, JSON.json(body))
+			return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 		end
 		if !supportsHessian(model)
 			body = Dict(
@@ -748,7 +748,7 @@ function applyHessianRequest(models::Vector)
 						    "message" => "Unsupported feature"
 						    )
 				    )
-			return HTTP.Response(400, JSON.json(body))
+			return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 		end
 
 		model_inWrt1 = parsed_body["inWrt1"]
@@ -765,7 +765,7 @@ function applyHessianRequest(models::Vector)
 						    "message" => "Invalid input"
 						    )
 				    )
-			return HTTP.Response(400, JSON.json(body))
+			return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 
 		end
 		for i in eachindex(model_parameters)
@@ -776,7 +776,7 @@ function applyHessianRequest(models::Vector)
 							    "message" => "Input must be an array of arrays!"
 							    )
 					    )
-				return HTTP.Response(400, JSON.json(body))
+				return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 			end
 			if length(model_parameters[i]) != model.inputSizes[i]
 				body = Dict(
@@ -785,7 +785,7 @@ function applyHessianRequest(models::Vector)
 							    "message" => "Input parameter $i has invalid length! Expected $(model.inputSizes[i]) but got $(length(model_parameters[i])) instead!"
 							    )
 					    )
-				return HTTP.Response(400, JSON.json(body))
+				return HTTP.Response(400, ["Content-Type" => "application/json"], JSON.json(body))
 			end
 		end
 
@@ -803,7 +803,7 @@ function applyHessianRequest(models::Vector)
 		body = Dict(
 			    "output" => output
 			    )
-		return HTTP.Response(JSON.json(body))
+		return HTTP.Response(200, ["Content-Type" => "application/json"], JSON.json(body))
 	end
 	return handler
 end
