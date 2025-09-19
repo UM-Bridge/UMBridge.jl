@@ -17,4 +17,4 @@ function show_json(io::StructuralContext, ::NaNSerialization, f::AbstractFloat)
     end
 end
 
-jsonify(object::Any; allow_infnan=true) = sprint(show_json, allow_infnan ? NaNSerialization() : StandardSerialization(), object)
+jsonify(object::Any; allow_infnan=false) = sprint(show_json, allow_infnan ? NaNSerialization() : StandardSerialization(), object)
