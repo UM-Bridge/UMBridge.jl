@@ -214,7 +214,7 @@ end
 end
 
 
-# Define model for 1D function f(x) = x^2
+# Define dummy model for Inifinity and Nan values
 model_infnan = UMBridge.Model(
     name = "inf_nan",
     inputSizes = [4],
