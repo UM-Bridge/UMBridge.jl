@@ -17,8 +17,8 @@ function testserver_sizes(models)
         "name" => UMBridge.name(models[1]),
         "config" => Dict()
     )
-    response_input  = UMBridge.inputRequest(models)(HTTP.Request("POST", "/InputSizes", [], UMBridge.jsonify(body)))
-    response_output = UMBridge.outputRequest(models)(HTTP.Request("POST", "/OutputSizes", [], UMBridge.jsonify(body)))
+    response_input  = UMBridge.inputRequest(models)(HTTP.Request("POST", "/InputSizes", [], UMBridge.jsonify(body; allow_infnan=true)))
+    response_output = UMBridge.outputRequest(models)(HTTP.Request("POST", "/OutputSizes", [], UMBridge.jsonify(body; allow_infnan=true)))
     all([response_input.status == 200, response_output.status == 200])
 end
 
@@ -27,7 +27,7 @@ function testserver_info(models)
         "name" => UMBridge.name(models[1]),
         "config" => Dict()
     )
-    response_input  = UMBridge.infoRequest(models)(HTTP.Request("GET", "/Info", [], UMBridge.jsonify(body)))
+    response_input  = UMBridge.infoRequest(models)(HTTP.Request("GET", "/Info", [], UMBridge.jsonify(body; allow_infnan=true)))
     return response_input.status == 200
 end
 
@@ -38,7 +38,7 @@ function testserver_evaluate(models)
         "input" => [[1.0]],
         "config" => Dict()
     )
-    response_input  = UMBridge.evaluateRequest(models)(HTTP.Request("POST", "/Evaluate", [], UMBridge.jsonify(body)))
+    response_input  = UMBridge.evaluateRequest(models)(HTTP.Request("POST", "/Evaluate", [], UMBridge.jsonify(body; allow_infnan=true)))
     return response_input.status == 200
 end
 
@@ -53,7 +53,7 @@ function testserver_gradient(models)
         "input" => [[1.0]],
         "config" => Dict()
     )
-    response_input  = UMBridge.gradientRequest(models)(HTTP.Request("POST", "/Gradient", [], UMBridge.jsonify(body)))
+    response_input  = UMBridge.gradientRequest(models)(HTTP.Request("POST", "/Gradient", [], UMBridge.jsonify(body; allow_infnan=true)))
     return response_input.status == 200
 end
 
@@ -68,7 +68,7 @@ function testserver_jacobian(models)
         "vec" => [1.0],
         "config" => Dict()
     )
-    response_input  = UMBridge.applyJacobianRequest(models)(HTTP.Request("POST", "/ApplyJacobian", [], UMBridge.jsonify(body)))
+    response_input  = UMBridge.applyJacobianRequest(models)(HTTP.Request("POST", "/ApplyJacobian", [], UMBridge.jsonify(body; allow_infnan=true)))
     return response_input.status == 200
 end
 
@@ -85,7 +85,7 @@ function testserver_hessian(models)
         "sens" => [1],
         "config" => Dict()
     )
-    response_input  = UMBridge.applyHessianRequest(models)(HTTP.Request("POST", "/ApplyHessian", [], UMBridge.jsonify(body)))
+    response_input  = UMBridge.applyHessianRequest(models)(HTTP.Request("POST", "/ApplyHessian", [], UMBridge.jsonify(body; allow_infnan=true)))
     return response_input.status == 200
 end
 
@@ -164,7 +164,7 @@ function testserver_gradient_1D(models)
     )
 
     # Make gradient request
-    response_input = UMBridge.gradientRequest(models)(HTTP.Request("POST", "/Gradient", [], UMBridge.jsonify(body)))
+    response_input = UMBridge.gradientRequest(models)(HTTP.Request("POST", "/Gradient", [], UMBridge.jsonify(body; allow_infnan=true)))
     expected_gradient = models[1].gradient(1, 1, input, sens, Dict())
     
     # Verify the gradient application result 
@@ -200,7 +200,7 @@ function testserver_jacobian_2D(models)
     )
 
     # Make jacobian request
-    response_input = UMBridge.applyJacobianRequest(models)(HTTP.Request("POST", "/ApplyJacobian", [], UMBridge.jsonify(body)))
+    response_input = UMBridge.applyJacobianRequest(models)(HTTP.Request("POST", "/ApplyJacobian", [], UMBridge.jsonify(body; allow_infnan=true)))
     expected_jacobian_application = models[1].applyJacobian(1, 1, input, vect, Dict())
 
 
@@ -214,7 +214,7 @@ end
 end
 
 
-# Define dummy model for Infinity and NaN values in input and output
+# Define model for 1D function f(x) = x^2
 model_infnan = UMBridge.Model(
     name = "inf_nan",
     inputSizes = [4],
@@ -233,7 +233,7 @@ function testserver_model_infnan(models)
     )
 
     # Make evaluate request
-    response_input = UMBridge.evaluateRequest(models)(HTTP.Request("POST", "/Evaluate", [], UMBridge.jsonify(body)))
+    response_input = UMBridge.evaluateRequest(models)(HTTP.Request("POST", "/Evaluate", [], UMBridge.jsonify(body; allow_infnan=true)))
     expected_output = models[1].evaluate(input, Dict())
 
     # Verify if Infinity and NaN values are handled correctly
