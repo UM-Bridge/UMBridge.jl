@@ -92,7 +92,7 @@ end
 @testset "UMBridge.jl" begin
 
     # Test client
-    httpmodel = UMBridge.HTTPModel("forward", "https://testmodel.linusseelinger.de")
+    httpmodel = UMBridge.HTTPModel("https://testmodel.linusseelinger.de", "forward")
     @test UMBridge.evaluate(httpmodel, [[4]], Dict())[1][1] == 8.0
     @test UMBridge.protocol_version_supported(httpmodel)
     @test UMBridge.get_models(httpmodel)[1] == "forward"
@@ -115,7 +115,7 @@ end
 
 @testset "Test Connection" begin
     
-    model=UMBridge.HTTPModel("posterior", "https://benchmark-analytic-funnel.linusseelinger.de")
+    model=UMBridge.HTTPModel("https://benchmark-analytic-funnel.linusseelinger.de", "posterior")
     httpValue = UMBridge.evaluate(model, [[1.0, 3.0]], Dict())[1][1]
     exactValue = -5.147502395904501;
     @test isapprox(httpValue, exactValue, rtol=1e-14)
@@ -124,7 +124,7 @@ end
 
 @testset "Test Apply Jacobian" begin
     
-    model=UMBridge.HTTPModel("posterior", "https://benchmark-analytic-funnel.linusseelinger.de")
+    model=UMBridge.HTTPModel("https://benchmark-analytic-funnel.linusseelinger.de", "posterior")
     httpValue = UMBridge.apply_jacobian(model, 0, 0, [[1.0, 3.0]], [1.0, 4.0])[1]
     exactValue = -3.370206919896928;
     @test isapprox(httpValue, exactValue, rtol=1e-14)
@@ -133,7 +133,7 @@ end
 
 @testset "Test Gradient" begin
     
-    model=UMBridge.HTTPModel("posterior", "https://benchmark-analytic-funnel.linusseelinger.de")
+    model=UMBridge.HTTPModel("https://benchmark-analytic-funnel.linusseelinger.de", "posterior")
     httpValue = UMBridge.gradient(model, 0, 0, [[1.0, 3.0]], [12])[1][1]
     exactValue = 12.53215648992455;
     @test isapprox(httpValue, exactValue, rtol=1e-14)
