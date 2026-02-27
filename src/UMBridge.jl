@@ -8,8 +8,8 @@ using Sockets
 
 # Make HTTP request following UM-Bridge protocol
 struct HTTPModel
-	name::String
 	url::String
+	name::String
 end
 
 name(model::HTTPModel) = model.name
