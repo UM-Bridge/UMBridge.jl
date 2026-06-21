@@ -113,6 +113,71 @@ end
 
 end
 
+function testserver_varsizes(models,config)
+    body = Dict(
+        "name" => UMBridge.name(models[1]),
+        "config" => config
+    )
+
+    response_input = UMBridge.inputRequest(models)(HTTP.Request("POST","/InputSizes",[],JSON.json(body)))
+    response_output = UMBridge.outputRequest(models)(HTTP.Request("POST","/OutputSizes",[],JSON.json(body)))
+    parsed_input = JSON.parse(String(response_input.body))
+    parsed_output = JSON.parse(String(response_output.body))
+    return [response_input.status,response_output.status],[parsed_input["inputSizes"],parsed_output["outputSizes"]]
+end
+
+@testset "Variable sizes" begin
+    function infun(config)
+        if haskey(config,"biginput")
+            if config["biginput"]
+                return [10]
+            end
+        end
+        return [1]
+    end
+    function outfun(config)
+        if haskey(config,"bigoutput")
+            if config["bigoutput"]
+                return [5]
+            end
+        end
+        return [2]
+    end
+    modelVarIO = UMBridge.Model(
+        name = "varIO",
+        inputSizes = infun,
+        outputSizes = outfun,
+    )
+
+    # config given? In: false, out: false
+    status_ff,responses_ff = testserver_varsizes([modelVarIO],Dict())
+    @test status_ff[1] == 200
+    @test status_ff[2] == 200
+    @test responses_ff[1][1] == 1
+    @test responses_ff[2][1] == 2
+
+    # config given? In: true, out: false
+    status_tf,responses_tf = testserver_varsizes([modelVarIO],Dict("biginput"=>true))
+    @test status_tf[1] == 200
+    @test status_tf[2] == 200
+    @test responses_tf[1][1] == 10
+    @test responses_tf[2][1] == 2
+
+    # config given? In: false, out: true
+    status_ft,responses_ft = testserver_varsizes([modelVarIO],Dict("bigoutput"=>true))
+    @test status_ft[1] == 200
+    @test status_ft[2] == 200
+    @test responses_ft[1][1] == 1
+    @test responses_ft[2][1] == 5
+
+    # config given? In: true, out: true
+    status_tt,responses_tt = testserver_varsizes([modelVarIO],Dict("biginput"=>true,"bigoutput"=>true))
+    @test status_tt[1] == 200
+    @test status_tt[2] == 200
+    @test responses_tt[1][1] == 10
+    @test responses_tt[2][1] == 5
+end
+
 @testset "Test Connection" begin
     
     model=UMBridge.HTTPModel("posterior", "https://benchmark-analytic-funnel.linusseelinger.de")
