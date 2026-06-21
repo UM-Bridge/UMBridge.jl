@@ -3,7 +3,6 @@ module UMBridge
 import HTTP
 import JSON
 import Base.Threads
-using Parameters
 using Sockets
 
 # Make HTTP request following UM-Bridge protocol
