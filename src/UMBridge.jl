@@ -3,7 +3,6 @@ module UMBridge
 import HTTP
 import JSON
 import Base.Threads
-using Parameters
 using Sockets
 include("inf_nan.jl")
 
@@ -181,18 +180,45 @@ function supports_apply_hessian(model::HTTPModel)
 	return parsed["support"]["ApplyHessian"]
 end
 
-@with_kw mutable struct Model
+mutable struct Model
 	name::String
-	inputSizes::AbstractArray
-	outputSizes::AbstractArray
-	supportsEvaluate::Bool = true
-	supportsGradient::Bool = false
-	supportsJacobian::Bool = false
-	supportsHessian::Bool  = false
-	evaluate::Function = (input::Any, config::Any) -> (error("Evaluate: Not implemented"))
-	gradient::Function = (outWrt::Any, inWrt::Any, input::Any, sens::Any, config::Any) -> (error("Gradient: Not implemented"))
-	applyJacobian::Function = (outWrt::Any, inWrt::Any, input::Any, vec::Any, config::Any) -> (error("Apply Jacobian: Not implemented"))
+    inputSizes::Function
+    outputSizes::Function
+    supportsEvaluate::Bool
+    supportsGradient::Bool
+    supportsJacobian::Bool
+    supportsHessian::Bool
+    evaluate::Function
+    gradient::Function
+    applyJacobian::Function
+    applyHessian::Function
+end
+
+function Model(;
+        name::String,
+        inputSizes::Union{Function,Vector{T}} = (config::Any) -> (error("inputSizes: Not implemented")),
+        outputSizes::Union{Function,Vector{T}} = (config::Any) -> (error("outputSizes: Not implemented")),
+        supportsEvaluate::Bool = true,
+        supportsGradient::Bool = false,
+        supportsJacobian::Bool = false,
+        supportsHessian::Bool = false,
+        evaluate::Function = (input::Any, config::Any) -> (error("Evaluate: Not implemented")),
+        gradient::Function = (outWrt::Any, inWrt::Any, input::Any, sens::Any, config::Any) -> (error("Gradient: Not implemented")),
+        applyJacobian::Function = (outWrt::Any, inWrt::Any, input::Any, vec::Any, config::Any) -> (error("Apply Jacobian: Not implemented")),
 	applyHessian::Function = (outWrt::Any, inWrt1::Any, inWrt2::Any, input::Any, sens::Any, vec::Any, config::Any) -> (error("Apply Hessian: Not implemented"))
+    ) where T
+
+    inputSizesArg = inputSizes
+    if typeof(inputSizes) <: Vector
+        inputSizesArg = (config::Any=Dict()) -> (return inputSizes)
+    end
+
+    outputSizesArg = outputSizes
+    if typeof(outputSizes) <: Vector
+        outputSizesArg = (config::Any=Dict()) -> (return outputSizes)
+    end
+
+    return Model(name, inputSizesArg, outputSizesArg, supportsEvaluate, supportsGradient, supportsJacobian, supportsHessian, evaluate, gradient, applyJacobian, applyHessian)
 end
 
 name(model::Model) = model.name
@@ -283,7 +309,7 @@ function inputRequest(models::Vector)
 
 		try
 			body = Dict(
-				    "inputSizes" => model.inputSizes
+                "inputSizes" => model.inputSizes(model_config)
 				    )
 			return HTTP.Response(jsonify(body; allow_infnan=true))
 		catch e
@@ -322,7 +348,7 @@ function outputRequest(models::Vector)
 
 		try
 			body = Dict(
-				    "outputSizes" => model.outputSizes
+                "outputSizes" => model.outputSizes(model_config)
 				    )
 			return HTTP.Response(jsonify(body; allow_infnan=true))
 		catch e
@@ -396,7 +422,7 @@ function evaluateRequest(models::Vector)
 		# Extract inputs and check
 		model_parameters = parsed_body["input"]
 		try
-			if length(model_parameters) != length(model.inputSizes)
+            if length(model_parameters) != length(model.inputSizes(model_config))
 				body = Dict(
 					    "error" => Dict(
 							    "type" => "InvalidInput",
@@ -411,7 +437,7 @@ function evaluateRequest(models::Vector)
 
 		for i in 1:length(model_parameters)
 			try
-				if length(model_parameters[i]) != model.inputSizes[i]
+                if length(model_parameters[i]) != model.inputSizes(model_config)[i]
 
 					body = Dict(
 						    "error" => Dict(
@@ -446,7 +472,7 @@ function evaluateRequest(models::Vector)
 					    )
 				return HTTP.Response(400, jsonify(body; allow_infnan=true))
 			end
-			if length(model_parameters[i]) != model.inputSizes[i]
+            if length(model_parameters[i]) != model.inputSizes(model_config)[i]
 				body = Dict(
 					    "error" => Dict(
 							    "type" => "InvalidInput",
@@ -474,7 +500,7 @@ function evaluateRequest(models::Vector)
 
 		# Validate output length
 		try
-			if length(output) != length(model.outputSizes)
+            if length(output) != length(model.outputSizes(model_config))
 				body = Dict(
 					    "error" => Dict(
 							    "type" => "InvalidOutput",
@@ -497,7 +523,7 @@ function evaluateRequest(models::Vector)
 					    )
 				return HTTP.Response(400, jsonify(body; allow_infnan=true))
 			end
-			if length(output[i]) != model.outputSizes[i]
+            if length(output[i]) != model.outputSizes(model_config)[i]
 				body = Dict(
 					    "error" => Dict(
 							    "type" => "InvalidOutput",
@@ -548,7 +574,7 @@ function gradientRequest(models::Vector)
 
 		model_inWrt = parsed_body["inWrt"] + 1 # account for julia indices starting at 1
 		try
-			if model_inWrt < 1 || model_inWrt > length(model.inputSizes)
+            if model_inWrt < 1 || model_inWrt > length(model.inputSizes(model_config))
 				body = Dict(
 					    "error" => Dict(
 							    "type" => "InvalidInput",
@@ -562,7 +588,7 @@ function gradientRequest(models::Vector)
 		end             
 		model_outWrt = parsed_body["outWrt"] + 1 # account for julia indices starting at 1
 		try
-			if model_outWrt < 1 || model_outWrt > length(model.inputSizes)
+            if model_outWrt < 1 || model_outWrt > length(model.inputSizes(model_config))
 				body = Dict(
 					    "error" => Dict(
 							    "type" => "InvalidInput",
@@ -578,7 +604,7 @@ function gradientRequest(models::Vector)
 		model_sens = parsed_body["sens"]
 		model_parameters = parsed_body["input"]
 		try
-			if length(model_parameters) != length(model.inputSizes)
+            if length(model_parameters) != length(model.inputSizes(model_config))
 				body = Dict(
 					    "error" => Dict(
 							    "type" => "InvalidInput",
@@ -603,7 +629,7 @@ function gradientRequest(models::Vector)
 					return HTTP.Response(400, jsonify(body; allow_infnan=true))
 				end
 
-				if length(model_parameters[i]) != model.inputSizes[i]
+                if length(model_parameters[i]) != model.inputSizes(model_config)[i]
 					body = Dict(
 						    "error" => Dict(
 								    "type" => "InvalidInput",
@@ -672,7 +698,7 @@ function applyJacobianRequest(models::Vector)
 		model_vec = parsed_body["vec"]
 		model_parameters = parsed_body["input"]
 
-		if length(model_parameters) != length(model.inputSizes)
+        if length(model_parameters) != length(model.inputSizes(model_config))
 			body = Dict(
 				    "error" => Dict(
 						    "type" => "InvalidInput",
@@ -692,7 +718,7 @@ function applyJacobianRequest(models::Vector)
 					    )
 				return HTTP.Response(400, jsonify(body; allow_infnan=true))
 			end
-			if length(model_parameters[i]) != model.inputSizes[i]
+            if length(model_parameters[i]) != model.inputSizes(model_config)[i]
 				body = Dict(
 					    "error" => Dict(
 							    "type" => "InvalidInput",
@@ -760,7 +786,7 @@ function applyHessianRequest(models::Vector)
 		model_vec = parsed_body["vec"]
 		model_parameters = parsed_body["input"]
 
-		if length(model_parameters) != length(model.inputSizes)
+        if length(model_parameters) != length(model.inputSizes(model_config))
 			body = Dict(
 				    "error" => Dict(
 						    "type" => "InvalidInput",
@@ -780,7 +806,7 @@ function applyHessianRequest(models::Vector)
 					    )
 				return HTTP.Response(400, jsonify(body; allow_infnan=true))
 			end
-			if length(model_parameters[i]) != model.inputSizes[i]
+            if length(model_parameters[i]) != model.inputSizes(model_config)[i]
 				body = Dict(
 					    "error" => Dict(
 							    "type" => "InvalidInput",
