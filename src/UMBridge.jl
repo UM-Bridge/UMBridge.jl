@@ -435,22 +435,6 @@ function evaluateRequest(models::Vector)
 			return runtime_error(model, e, "the evaluation of inputSizes", "InputSizes", "input size")
 		end         
 
-		for i in 1:length(model_parameters)
-			try
-                if length(model_parameters[i]) != model.inputSizes(model_config)[i]
-
-					body = Dict(
-						    "error" => Dict(
-								    "type" => "InvalidInput",
-								    "message" => "Invalid input"
-								    )
-						    )
-					return HTTP.Response(400, jsonify(body; allow_infnan=true))
-				end
-			catch e
-				return runtime_error(model, e, "the evaluation of inputSizes", "InputSizes", "input size")
-			end         
-		end
 		if !supportsEvaluate(model)
 
 			body = Dict(
