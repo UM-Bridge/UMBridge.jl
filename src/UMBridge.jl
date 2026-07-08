@@ -9,8 +9,8 @@ include("inf_nan.jl")
 
 # Make HTTP request following UM-Bridge protocol
 struct HTTPModel
-	name::String
 	url::String
+	name::String
 end
 
 name(model::HTTPModel) = model.name
@@ -77,7 +77,7 @@ function apply_jacobian(model::HTTPModel, out_wrt, in_wrt, input, vec, config = 
 	return parsed["output"]
 end
 
-function apply_hessian(model::HTTPModel, out_wrt, in_wrt1, in_wrt2, input, vec, sens, config = Dict())
+function apply_hessian(model::HTTPModel, out_wrt, in_wrt1, in_wrt2, input, sens, vec, config = Dict())
 	body = Dict(
 		    "name"   => name(model),
 		    "outWrt" => out_wrt,
