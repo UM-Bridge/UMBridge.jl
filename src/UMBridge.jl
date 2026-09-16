@@ -460,7 +460,7 @@ function evaluateRequest(models::Vector)
 				body = Dict(
 					    "error" => Dict(
 							    "type" => "InvalidInput",
-							    "message" => "Input parameter $i has invalid length! Expected $(model.inputSizes[i]) but got $(length(model_parameters[i])) instead!"
+							    "message" => "Input parameter $i has invalid length! Expected $(model.inputSizes(model_config)[i]) but got $(length(model_parameters[i])) instead!"
 							    )
 					    )
 				return HTTP.Response(400, jsonify(body; allow_infnan=true))
@@ -511,7 +511,7 @@ function evaluateRequest(models::Vector)
 				body = Dict(
 					    "error" => Dict(
 							    "type" => "InvalidOutput",
-							    "message" => "Output parameter $i has invalid length! Expected $(model.outputSizes[i]) but got $(length(output[i])) instead!"
+							    "message" => "Output parameter $i has invalid length! Expected $(model.outputSizes(model_config)[i]) but got $(length(output[i])) instead!"
 							    )
 					    )
 				return HTTP.Response(400, jsonify(body; allow_infnan=true))
@@ -617,7 +617,7 @@ function gradientRequest(models::Vector)
 					body = Dict(
 						    "error" => Dict(
 								    "type" => "InvalidInput",
-								    "message" => "Input parameter $i has invalid length! Expected $(model.inputSizes[i]) but got $(length(model_parameters[i])) instead!"
+								    "message" => "Input parameter $i has invalid length! Expected $(model.inputSizes(model_config)[i]) but got $(length(model_parameters[i])) instead!"
 								    )
 						    )
 					return HTTP.Response(400, jsonify(body; allow_infnan=true))
@@ -706,7 +706,7 @@ function applyJacobianRequest(models::Vector)
 				body = Dict(
 					    "error" => Dict(
 							    "type" => "InvalidInput",
-							    "message" => "Input parameter $i has invalid length! Expected $(model.inputSizes[i]) but got $(length(model_parameters[i])) instead!"
+							    "message" => "Input parameter $i has invalid length! Expected $(model.inputSizes(model_config)[i]) but got $(length(model_parameters[i])) instead!"
 							    )
 					    )
 				return HTTP.Response(400, jsonify(body; allow_infnan=true))
@@ -794,7 +794,7 @@ function applyHessianRequest(models::Vector)
 				body = Dict(
 					    "error" => Dict(
 							    "type" => "InvalidInput",
-							    "message" => "Input parameter $i has invalid length! Expected $(model.inputSizes[i]) but got $(length(model_parameters[i])) instead!"
+							    "message" => "Input parameter $i has invalid length! Expected $(model.inputSizes(model_config)[i]) but got $(length(model_parameters[i])) instead!"
 							    )
 					    )
 				return HTTP.Response(400, jsonify(body; allow_infnan=true))
